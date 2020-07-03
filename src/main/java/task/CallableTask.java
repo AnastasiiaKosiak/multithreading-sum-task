@@ -13,7 +13,6 @@ public class CallableTask implements Callable<Long> {
     @Override
     public Long call() {
         return integers.stream()
-                .mapToLong(num -> num)
-                .sum();
+                .reduce(0L, Long::sum);
     }
 }

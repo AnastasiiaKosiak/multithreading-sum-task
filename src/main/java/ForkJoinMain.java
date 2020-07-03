@@ -11,9 +11,12 @@ public class ForkJoinMain {
         List<Long> list = LongStream.range(0, SIZE)
                 .boxed()
                 .collect(Collectors.toList());
+        System.out.println(calculateListSum(list));
+    }
+
+    public static Long calculateListSum(List<Long> list) {
         ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
         RecursiveSumTask recursiveSumTask = new RecursiveSumTask(0, list.size() - 1, list);
-        Long sum = forkJoinPool.invoke(recursiveSumTask);
-        System.out.println(sum);
+        return forkJoinPool.invoke(recursiveSumTask);
     }
 }
