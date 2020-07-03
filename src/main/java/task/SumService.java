@@ -1,37 +1,33 @@
+package task;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
-import task.CallableTask;
 
-public class CallableMain {
-    private static final int SIZE = 1_000_000;
+public class SumService {
     private static final int THREADS_AMOUNT = 10;
 
-    public static void main(String[] args) throws InterruptedException {
-        List<Long> list = LongStream.range(0, SIZE)
-                .boxed()
-                .collect(Collectors.toList());
+    public Long getSumWithCallable(List<Long> input) throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS_AMOUNT);
         List<Callable<Long>> callableList = new ArrayList<>();
-        int subListsNumber = list.size() / 10;
+        int subListsNumber = input.size() / 10;
         for (int i = 0; i < 10; i++) {
-            List<Long> subList = list.subList(i * subListsNumber, (i + 1) * subListsNumber);
+            List<Long> subList = input.subList(i * subListsNumber, (i + 1) * subListsNumber);
             Callable<Long> subLists = new CallableTask(subList);
             callableList.add(subLists);
         }
         List<Future<Long>> futures = executorService.invokeAll(callableList);
         Long result = calculateListSum(futures);
-        System.out.println(result);
         executorService.shutdown();
+        return result;
     }
 
-    public static Long calculateListSum(List<Future<Long>> input) {
+    private Long calculateListSum(List<Future<Long>> input) {
         return input.stream()
                 .mapToLong(longFuture -> {
                     try {
@@ -42,4 +38,12 @@ public class CallableMain {
                 })
                 .sum();
     }
+
+    public Long getSumWithForkJoin(List<Long> input) {
+        ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+        RecursiveSumTask recursiveSumTask =
+                new RecursiveSumTask(0, input.size() - 1, input);
+        return forkJoinPool.invoke(recursiveSumTask);
+    }
 }
+
